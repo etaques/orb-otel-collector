@@ -35,14 +35,13 @@ func (a *Answer) filterLogs(logFile string) {
 	go func() {
 		t, err := tail.TailFile(logFile, tail.Config{Follow: true, ReOpen: true})
 		if err != nil {
-			fmt.Println("Error handling log file")
+			fmt.Println("Error reading log file")
 		}
 		for line := range t.Lines {
 			fmt.Println(line.Text)
-			if strings.Contains(line.Text, "Unauthorized") {
-				fmt.Println("Unauthorized error found")
+			if strings.Contains(line.Text, "Permanent error: remote write returned HTTP status 401 Unauthorized") {
 				a.response["status"] = "error"
-				a.response["message"] = "unauthorized prometheus remote write"
+				a.response["message"] = "Permanent error: remote write returned HTTP status 401 Unauthorized"
 			}
 		}
 	}()
@@ -50,7 +49,7 @@ func (a *Answer) filterLogs(logFile string) {
 
 func main() {
 	as := newHealthCheck("ok", "healthy")
-	as.filterLogs("teste.log")
+	as.filterLogs("otel-collector.log")
 	http.HandleFunc("/health", as.health)
 	http.ListenAndServe("localhost:8090", nil)
 }
