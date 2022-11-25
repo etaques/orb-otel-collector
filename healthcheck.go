@@ -43,13 +43,20 @@ func (a *Answer) filterLogs(logFile string) {
 				a.response["status"] = "error"
 				a.response["message"] = "Permanent error: remote write returned HTTP status 401 Unauthorized"
 			}
+			if strings.Contains(line.Text, "Permanent error: remote write returned HTTP status 429 Too Many Requests") {
+				a.response["status"] = "error"
+				a.response["message"] = "Permanent error: remote write returned HTTP status 429 Too Many Requests"
+			}
 		}
 	}()
 }
 
 func main() {
+	// initial status
 	as := newHealthCheck("ok", "healthy")
-	as.filterLogs("otel-collector.log")
+	// start filtering logs
+	as.filterLogs("/tmp/otel-collector.log")
 	http.HandleFunc("/health", as.health)
-	http.ListenAndServe("localhost:8090", nil)
+	// start webserver
+	http.ListenAndServe(":8090", nil)
 }
